@@ -1,0 +1,74 @@
+[tool.poetry]
+name = "dbfs-package-sync"
+version = "0.1.0"
+description = "Basic CLI tool that can sync a local Python package directory with a folder on dbfs"
+authors = ["Jeroen Meidam <j.meidam@gmail.com>"]
+readme = "README.md"
+packages = [{include = "dbfsps"}]
+repository = "https://github.com/jmeidam/dbfs-package-sync"
+
+
+[tool.poetry.dependencies]
+python = "^3.9"
+click = "^8.0"
+pandas = "^1.0"
+databricks-cli = "^0.17.7"
+
+
+[tool.poetry.group.dev.dependencies]
+coverage = {extras = ["toml"], version = "^6.4.4"}
+Sphinx = "^4.3.2"
+sphinx-rtd-theme = "^1.0.0"
+pytest = "^6.1.2"
+pytest-mock = "^3.3.1"
+pytest-env = "^0.6.2"
+pytest-cov = "^3.0.0"
+black = "^22.0.0"
+
+[tool.poetry.scripts]
+dbfsps = 'dbfsps.cli.databricks_sync:databricks_sync_api'
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.pytest.ini_options]
+addopts = "-s -p no:warnings"
+log_cli = 1
+log_cli_level = "INFO"
+log_cli_format = "[pytest][%(asctime)s][%(levelname)s][%(module)s][%(funcName)s] %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+log_level = "INFO"
+filterwarnings = [
+    "ignore::DeprecationWarning:py4j.*:",
+    "ignore::DeprecationWarning:pyspark.*:",
+    "ignore::DeprecationWarning:pyhocon.*:",
+    "ignore::DeprecationWarning:distutils.*:"
+]
+env = [
+    "SENDGRID_SENDER=mlops@jumbo.com",
+    "SENDGRID_API_KEY=xxx",
+    "AZURE_APP_CONFIG_CONNECTION_STRING=conn_string_pytest_ini"
+]
+
+[tool.black]
+line-length = 120
+
+[tool.coverage.run]
+branch = true
+source = [
+    "dbfsps"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "if self.debug:",
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:"
+]
+ignore_errors = true
+omit = [
+    "tests/*"
+]
