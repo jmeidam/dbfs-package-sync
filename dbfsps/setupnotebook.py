@@ -26,7 +26,7 @@ class SetupNotebook:
         self.source = _source.format(package_path=self.dbfs_path)
 
     def generate_notebook_file(self):
-        with open(self.notebook_path, 'w') as f:
+        with open(self.notebook_path, "w") as f:
             f.write(self.source)
 
     def get_path(self) -> str:

@@ -20,9 +20,8 @@ class DbfsPathNoClicks(DbfsPath):
         Checks that the path is a proper DbfsPath. it must have a prefix of
         "dbfs:" and must be an absolute path.
         """
-        if self.absolute_path.startswith('dbfs://'):
-            raise ValueError(f'The path {repr(self)} cannot start with dbfs://. '
-                             'It must start with dbfs:/')
+        if self.absolute_path.startswith("dbfs://"):
+            raise ValueError(f"The path {repr(self)} cannot start with dbfs://. " "It must start with dbfs:/")
         if not self.is_absolute_path:
             raise ValueError(f'The path {repr(self)} must start with "dbfs:/"')
 
@@ -52,6 +51,7 @@ class Dbfs:
     :param kwargs:
         Any arguments aside from host and token that ApiClient accepts
     """
+
     def __init__(self, host: str, token: str, **kwargs):
         if not host.startswith("https://"):
             host = "https://" + host
@@ -70,7 +70,7 @@ class Dbfs:
         try:
             self._api.cp(recursive, overwrite, source, destination)
         except HTTPError as exc:
-            raise DatabricksApiError(exc, message_prefix=f'Failed to copy {source} to {destination}')
+            raise DatabricksApiError(exc, message_prefix=f"Failed to copy {source} to {destination}")
 
     def ls(self, dbfs_path: str, strings_only: bool = False) -> list:
         """List files in DBFS
@@ -84,7 +84,7 @@ class Dbfs:
         try:
             paths = self._api.list_files(DbfsPathNoClicks(dbfs_path))
         except HTTPError as exc:
-            raise DatabricksApiError(exc, message_prefix=f'Failed to list {dbfs_path}')
+            raise DatabricksApiError(exc, message_prefix=f"Failed to list {dbfs_path}")
 
         if strings_only:
             paths_strings = []
@@ -105,7 +105,7 @@ class Dbfs:
         try:
             self._api.delete(DbfsPathNoClicks(dbfs_path), recursive=recursive)
         except HTTPError as exc:
-            raise DatabricksApiError(exc, message_prefix=f'Failed to remove {dbfs_path}')
+            raise DatabricksApiError(exc, message_prefix=f"Failed to remove {dbfs_path}")
 
     def mkdirs(self, dbfs_path: str):
         """Make directories in DBFS
@@ -116,7 +116,7 @@ class Dbfs:
         try:
             self._api.mkdirs(DbfsPathNoClicks(dbfs_path))
         except HTTPError as exc:
-            raise DatabricksApiError(exc, message_prefix=f'Failed to create {dbfs_path}')
+            raise DatabricksApiError(exc, message_prefix=f"Failed to create {dbfs_path}")
 
     def mv(self, source: str, destination: str):
         """Moves a file between two DBFS paths
@@ -127,7 +127,7 @@ class Dbfs:
         try:
             self._api.move(DbfsPathNoClicks(source), DbfsPathNoClicks(destination))
         except HTTPError as exc:
-            raise DatabricksApiError(exc, message_prefix=f'Failed to move {source} to {destination}')
+            raise DatabricksApiError(exc, message_prefix=f"Failed to move {source} to {destination}")
 
     def cat(self, dbfs_path: str) -> str:
         """Retrieve the contents of a file
@@ -136,7 +136,7 @@ class Dbfs:
             Path on databricks file system starting with "dbfs:"
         """
         with TempDir() as temp_dir:
-            temp_path = temp_dir.path('temp')
+            temp_path = temp_dir.path("temp")
             self.cp(dbfs_path, temp_path, recursive=False, overwrite=True)
             with open(temp_path) as f:
                 contents = f.read()
