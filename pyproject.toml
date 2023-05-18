@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dbfs-package-sync"
-version = "0.1.0"
+version = "0.1.1"
 description = "Basic CLI tool that can sync a local Python package directory with a folder on dbfs"
 authors = ["Jeroen Meidam <j.meidam@gmail.com>"]
 readme = "README.md"

@@ -46,7 +46,7 @@ def get_remote_path(remote_path: str, package_name: str) -> str:
 
 
 def upload_file(dbfs: Dbfs, source: str, destination: str):
-    dbfs.cp(source, destination, True)
+    dbfs.cp(source, destination, overwrite=True)
 
 
 def remove_file(dbfs: Dbfs, dbfs_path: str):
