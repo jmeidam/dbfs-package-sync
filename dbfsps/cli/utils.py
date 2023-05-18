@@ -4,7 +4,7 @@ from dbfsps import __version__
 import subprocess
 
 
-CONTEXT_SETTINGS = {'help_option_names': ['-h', '--help']}
+CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 
 
 def process_cmd_command(command: str):
@@ -17,11 +17,12 @@ def process_cmd_command(command: str):
         logging.error(f'command "{command}" failed')
         raise
 
+
 # Stolen from databricks-cli
 def print_version_callback(ctx, param, value):  # NOQA
     if not value or ctx.resilient_parsing:
         return
-    click.echo('Version {}'.format(__version__))
+    click.echo("Version {}".format(__version__))
     ctx.exit()
 
 

@@ -9,11 +9,11 @@ from dbfsps.sdk.dbfs import Dbfs
 
 
 def verify_dbfs_path(dbfs_path: str) -> str:
-    if not dbfs_path.startswith('dbfs:'):
+    if not dbfs_path.startswith("dbfs:"):
         raise ValueError('remote path must start with "dbfs:"')
-    if '\\' in dbfs_path:
+    if "\\" in dbfs_path:
         raise ValueError('remote path must be unix format, so only forward slashes "/"')
-    return dbfs_path.rstrip('/')
+    return dbfs_path.rstrip("/")
 
 
 def get_remote_path(remote_path: str, package_name: str) -> str:
@@ -31,7 +31,7 @@ def get_remote_path(remote_path: str, package_name: str) -> str:
     logger = logging.getLogger(__name__)
     if not remote_path:
         try:
-            remote_path = os.environ['PACKAGE_REMOTE_DIR']
+            remote_path = os.environ["PACKAGE_REMOTE_DIR"]
             logger.debug(f'Using remote_path from environment variable: "{remote_path}"')
         except KeyError:
             remote_path = f"dbfs:/FileStore/packages/{package_name}"
@@ -54,32 +54,55 @@ def remove_file(dbfs: Dbfs, dbfs_path: str):
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.argument('package_name')
-@click.option('--profile', '-p', default=None,
-              help='Databricks CLI profile to use to make the connection.')
-@click.option('--package-location', '-l', default=None,
-              help='Location of the package to be uploaded. Will be ./<package_name> by default')
-@click.option('--status-file', '-s', default='.dbfsps_file_status',
-              help='File that keeps track of when package files were last modified')
-@click.option('--remote-path', '-r', default=None,
-              help='Remote path to store package and requirements. '
-                   'If not provided, will first check PACKAGE_REMOTE_DIR variable, '
-                   'then use dbfs:/FileStore/packages/<package_name>')
-@click.option('--delete-status-file', '-x', is_flag=True, default=False,
-              help='Delete status file if exists to start over')
-@click.option('--dry-run', '-d', is_flag=True, default=False,
-              help='Do not upload anything, only print what would have been uploaded')
+@click.argument("package_name")
+@click.option("--profile", "-p", default=None, help="Databricks CLI profile to use to make the connection.")
+@click.option(
+    "--package-location",
+    "-l",
+    default=None,
+    help="Location of the package to be uploaded. Will be ./<package_name> by default",
+)
+@click.option(
+    "--status-file",
+    "-s",
+    default=".dbfsps_file_status",
+    help="File that keeps track of when package files were last modified",
+)
+@click.option(
+    "--remote-path",
+    "-r",
+    default=None,
+    help="Remote path to store package and requirements. "
+    "If not provided, will first check PACKAGE_REMOTE_DIR variable, "
+    "then use dbfs:/FileStore/packages/<package_name>",
+)
+@click.option(
+    "--delete-status-file", "-x", is_flag=True, default=False, help="Delete status file if exists to start over"
+)
+@click.option(
+    "--dry-run",
+    "-d",
+    is_flag=True,
+    default=False,
+    help="Do not upload anything, only print what would have been uploaded",
+)
 def databricks_sync_api(
-        package_name: str, package_location: str, status_file: str,
-        remote_path: str, delete_status_file: bool, dry_run: bool, profile: str):
+    package_name: str,
+    package_location: str,
+    status_file: str,
+    remote_path: str,
+    delete_status_file: bool,
+    dry_run: bool,
+    profile: str,
+):
     """
     Synchronize remote package with local changes
     """
     logger = logging.getLogger("dbfsps")
     logger.setLevel(logging.INFO)
 
-    if not os.path.isfile('pyproject.toml'):
-        raise RuntimeError('Must be run from source root directory (where pyproject.toml is located)')
+    if not os.path.isfile("pyproject.toml"):
+        raise RuntimeError("Must be run from source root directory (where pyproject.toml is located)")
 
     if delete_status_file:
         try:
@@ -90,7 +113,7 @@ def databricks_sync_api(
     if not profile:
         raise ValueError("Must specify a databricks-cli profile to use")
 
-    package_name = package_name.replace('-', '_').lower()
+    package_name = package_name.replace("-", "_").lower()
 
     remote_path = get_remote_path(remote_path, package_name)
 
@@ -98,7 +121,7 @@ def databricks_sync_api(
         package_location = package_name
 
     nb_path = f"init_{package_name}.py"
-    nb = SetupNotebook(remote_path.replace('dbfs:', '/dbfs'), nb_path)
+    nb = SetupNotebook(remote_path.replace("dbfs:", "/dbfs"), nb_path)
     if not os.path.isfile(nb.notebook_path):
         nb.generate_notebook_file()
 
@@ -109,9 +132,9 @@ def databricks_sync_api(
     logging.debug(f'Writing updated status table to "{status_file}"')
     df_status.to_csv(status_file, index=False)
 
-    logger.info(f'The following files will be uploaded: {files_to_upload}')
-    logger.info(f'The following files will be removed (remotely): {files_to_remove}')
-    logger.info(f'Using remote root path {remote_path}')
+    logger.info(f"The following files will be uploaded: {files_to_upload}")
+    logger.info(f"The following files will be removed (remotely): {files_to_remove}")
+    logger.info(f"Using remote root path {remote_path}")
 
     if len(files_to_upload) == 0 and len(files_to_remove) == 0:
         logger.info("Nothing to do")
