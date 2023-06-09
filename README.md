@@ -27,7 +27,6 @@ I run `dbfsps` and I have my local state on DBFS.
 
 **Caveats:**
 
-- Version 0.1.0 is not a very nice bit of code yet. I set it up in a bit of a rush.
 - Only works for poetry packages
 - At the top of the notebook you will of course need to install the dependencies once and set `autoreload`.
 The `dbfsps` command will send along a requirements file and create a helper notebook though, so you only need a single `%run`

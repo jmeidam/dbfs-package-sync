@@ -22,7 +22,8 @@ class State:
         self.statefilepath = os.path.join(self.root, statefilename)
         self.packagepath = os.path.join(self.root, self.package)
 
-        self.load_state()
+        if os.path.isfile(self.statefilepath):
+            self.load_state()
 
     def load_state(self):
         """Load files and their hashes from the statefile"""

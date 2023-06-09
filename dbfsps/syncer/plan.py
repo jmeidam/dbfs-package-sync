@@ -1,8 +1,9 @@
 import os
 import logging
 from dbfsps.syncer.state import State
-from dbfsps.syncer.file import File, sort_list_of_files
+from dbfsps.syncer.file import File, sort_list_of_files, calculate_file_hash
 from dbfsps.sdk.dbfs import Dbfs
+from dbfsps.cli.utils import create_requirements_file
 
 
 class Plan:
@@ -39,6 +40,29 @@ class Plan:
 
                     file_obj = File(rel_file_path, self.state.package, self.state.root)
                     self.local_files[file_obj.path] = file_obj
+        self._add_requirements_file()
+
+    def _add_requirements_file(self):
+        req_rel_path = self.get_requirements_relative_path()
+        req_abs_path = os.path.join(self.state.root, "requirements.txt")
+        lock_abs_path = os.path.join(self.state.root, "poetry.lock")
+
+        if not os.path.isfile(req_abs_path):
+            create_requirements_file()
+
+        requirements_hash = calculate_file_hash(lock_abs_path)
+        file_req = File(
+            req_rel_path, self.state.package, self.state.root,
+            hashstr=requirements_hash, relpath_remote="requirements.txt")
+        self.local_files[file_req.path] = file_req
+
+    def get_requirements_relative_path(self) -> str:
+        """The requirements file should be in the root of the repo.
+        This calculates the relative path to the file from the package dir"""
+        levels = len(self.state.package.split(os.sep))
+        prefix = os.sep.join([".." for _ in range(levels)])
+        rel_path = os.path.join(prefix, "requirements.txt")
+        return rel_path
 
     def _plan(self):
         set_local = set(self.local_files.keys())
@@ -54,6 +78,10 @@ class Plan:
             file_remote = self.state.files[path]
             if file_local.hash != file_remote.hash:
                 self.logger.debug(f"Hash of {path} differs")
+                if "requirements.txt" in path:
+                    # In this case the lockfile has changes, so the requirements file needs to be regenerated
+                    self.logger.info("Lockfile has changed, re-creating requirements.txt")
+                    create_requirements_file()
                 list_update.append(file_local)
         self.files_updated = sort_list_of_files(list_update)
         self.files_new = sort_list_of_files([self.local_files[k] for k in list_new])
@@ -71,6 +99,7 @@ class Plan:
         for file in self.files_deleted:
             print(f"File {file.path} will be removed")
         print(f"{n_del} files will be deleted; {n_new} files will be added; {n_upd} files will be updated.")
+        print(f"Remote path is {self.remote_path}")
 
     def apply_plan(self, dbfs: Dbfs):
         """Executes the delete/add/update operations from the plan and updates the statefile
@@ -78,12 +107,12 @@ class Plan:
         :param dbfs:
             An instance of the dbfs client to connect to Databricks
         """
-        all_files = self.files_updated+self.files_new
+        files_to_upload = self.files_updated+self.files_new
         files_uploaded = []
         files_deleted = []
 
-        for file in all_files:
-            dbfs_path = os.path.join(self.remote_path, file.path)
+        for file in files_to_upload:
+            dbfs_path = os.path.join(self.remote_path, file.path_remote)
             self.logger.debug(f"Copying {file} to {dbfs_path}")
             try:
                 dbfs.cp(file.path_abs, dbfs_path, overwrite=True)
@@ -91,7 +120,7 @@ class Plan:
             except Exception as exc:
                 self.logger.error(f"Exception encountered while copying {file.path}: {exc}")
         for file in self.files_deleted:
-            dbfs_path = os.path.join(self.remote_path, file.path)
+            dbfs_path = os.path.join(self.remote_path, file.path_remote)
             self.logger.debug(f"Removing {dbfs_path}")
             try:
                 dbfs.rm(dbfs_path)
@@ -105,6 +134,3 @@ class Plan:
             del self.state.files[file.path]
 
         self.state.store_state()
-
-
-
