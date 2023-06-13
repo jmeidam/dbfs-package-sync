@@ -24,6 +24,8 @@ class State:
 
         if os.path.isfile(self.statefilepath):
             self.load_state()
+        else:
+            self.logger.debug("No statefile created yet")
 
     def load_state(self):
         """Load files and their hashes from the statefile"""

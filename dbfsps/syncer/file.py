@@ -48,6 +48,12 @@ class File:
         else:
             return False
 
+    def __ne__(self, other) -> bool:
+        if self.hash != other.hash:
+            return True
+        else:
+            return False
+
 
 def sort_list_of_files(files: List[File]) -> List[File]:
     """

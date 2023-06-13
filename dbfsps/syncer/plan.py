@@ -43,7 +43,7 @@ class Plan:
         self._add_requirements_file()
 
     def _add_requirements_file(self):
-        req_rel_path = self.get_requirements_relative_path()
+        req_rel_path = get_requirements_relative_path(self.state.package)
         req_abs_path = os.path.join(self.state.root, "requirements.txt")
         lock_abs_path = os.path.join(self.state.root, "poetry.lock")
 
@@ -55,14 +55,6 @@ class Plan:
             req_rel_path, self.state.package, self.state.root,
             hashstr=requirements_hash, relpath_remote="requirements.txt")
         self.local_files[file_req.path] = file_req
-
-    def get_requirements_relative_path(self) -> str:
-        """The requirements file should be in the root of the repo.
-        This calculates the relative path to the file from the package dir"""
-        levels = len(self.state.package.split(os.sep))
-        prefix = os.sep.join([".." for _ in range(levels)])
-        rel_path = os.path.join(prefix, "requirements.txt")
-        return rel_path
 
     def _plan(self):
         set_local = set(self.local_files.keys())
@@ -76,7 +68,7 @@ class Plan:
         for path in set_both:
             file_local = self.local_files[path]
             file_remote = self.state.files[path]
-            if file_local.hash != file_remote.hash:
+            if file_local != file_remote:
                 self.logger.debug(f"Hash of {path} differs")
                 if "requirements.txt" in path:
                     # In this case the lockfile has changes, so the requirements file needs to be regenerated
@@ -134,3 +126,12 @@ class Plan:
             del self.state.files[file.path]
 
         self.state.store_state()
+
+
+def get_requirements_relative_path(rel_package_path: str) -> str:
+    """The requirements file should be in the root of the repo.
+    This calculates the relative path to the file from the package dir"""
+    levels = len(rel_package_path.split(os.sep))
+    prefix = os.sep.join([".." for _ in range(levels)])
+    rel_path = os.path.join(prefix, "requirements.txt")
+    return rel_path
