@@ -105,7 +105,7 @@ class Plan:
 
         for file in files_to_upload:
             dbfs_path = os.path.join(self.remote_path, file.path_remote)
-            self.logger.debug(f"Copying {file} to {dbfs_path}")
+            self.logger.debug(f"Copying {file.path_abs} to {dbfs_path}")
             try:
                 dbfs.cp(file.path_abs, dbfs_path, overwrite=True)
                 files_uploaded.append(file)
