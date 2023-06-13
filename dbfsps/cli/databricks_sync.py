@@ -48,6 +48,7 @@ from dbfsps.sdk.dbfs import Dbfs
     default=os.path.abspath(os.curdir),
     help="Absolute path to the root dir of the repository where you can find pyproject.toml",
 )
+@click.option('-v', '--verbose', count=True)
 def databricks_sync_api(
     package_name: str,
     package_location: str,
@@ -56,13 +57,20 @@ def databricks_sync_api(
     delete_status_file: bool,
     dry_run: bool,
     profile: str,
-    root_path: str
+    root_path: str,
+    verbose: int
 ):
     """
     Synchronize remote package with local changes
     """
+    logging.basicConfig()
     logger = logging.getLogger("dbfsps")
-    logger.setLevel(logging.INFO)
+    if verbose == 0:
+        logger.setLevel(logging.WARNING)
+    elif verbose == 1:
+        logger.setLevel(logging.INFO)
+    else:
+        logger.setLevel(logging.DEBUG)
 
     if not os.path.isfile("pyproject.toml"):
         raise RuntimeError("Must be run from source root directory (where pyproject.toml is located)")

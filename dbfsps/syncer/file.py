@@ -39,7 +39,7 @@ class File:
 
     def _generate_hash(self) -> str:
         hashstr = calculate_file_hash(self.path_abs)
-        self.logger.debug(f"Generated new hash for {self.path} ({self.path_abs})")
+        self.logger.debug(f"Generated hash for {self.path}")
         return hashstr
 
     def __eq__(self, other) -> bool:

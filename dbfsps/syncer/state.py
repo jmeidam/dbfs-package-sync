@@ -30,7 +30,7 @@ class State:
     def load_state(self):
         """Load files and their hashes from the statefile"""
         with open(self.statefilepath, 'r') as f:
-            self.logger.debug(f"Loading statefile at {self.statefilepath}")
+            self.logger.info(f"Loading statefile at {self.statefilepath}")
             for line in f.readlines():
                 vals = line.strip().split(",")
                 relpath = vals[0]

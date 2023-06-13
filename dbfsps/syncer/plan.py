@@ -28,6 +28,7 @@ class Plan:
         self.files_new = []
         self.files_updated = []
 
+        self.logger.info(f"Creating plan for package {self.state.packagepath}")
         self._get_local_files()
         self._plan()
 
@@ -84,14 +85,29 @@ class Plan:
         n_upd = len(self.files_updated)
         n_new = len(self.files_new)
         n_del = len(self.files_deleted)
+        summary = f"{n_del} files will be deleted; {n_new} files will be added; {n_upd} files will be updated."
+        header, footer = self._format_header_footer(summary)
+        print(header)
         for file in self.files_updated:
             print(f"File {file.path} will be updated")
         for file in self.files_new:
             print(f"File {file.path} will be added")
         for file in self.files_deleted:
             print(f"File {file.path} will be removed")
-        print(f"{n_del} files will be deleted; {n_new} files will be added; {n_upd} files will be updated.")
+        print(summary)
         print(f"Remote path is {self.remote_path}")
+        print(footer)
+
+    def _format_header_footer(self, summary):
+        title = f"Plan for syncing {self.state.package}"
+        space_to_fill = int(len(summary) - 2 - len(title))
+        if space_to_fill % 2 != 0:
+            space_to_fill += 1
+        n_header_signs = int(space_to_fill/2)
+        header_sep = "=" * n_header_signs
+        header = f"{header_sep} {title} {header_sep}"
+        footer = "=" * len(header)
+        return header, footer
 
     def apply_plan(self, dbfs: Dbfs):
         """Executes the delete/add/update operations from the plan and updates the statefile
@@ -103,9 +119,12 @@ class Plan:
         files_uploaded = []
         files_deleted = []
 
+        if files_to_upload or self.files_deleted:
+            self.logger.info("Applying plan...")
+
         for file in files_to_upload:
             dbfs_path = os.path.join(self.remote_path, file.path_remote)
-            self.logger.debug(f"Copying {file.path_abs} to {dbfs_path}")
+            self.logger.info(f"Copying {file.path_abs} to {dbfs_path}")
             try:
                 dbfs.cp(file.path_abs, dbfs_path, overwrite=True)
                 files_uploaded.append(file)
@@ -113,7 +132,7 @@ class Plan:
                 self.logger.error(f"Exception encountered while copying {file.path}: {exc}")
         for file in self.files_deleted:
             dbfs_path = os.path.join(self.remote_path, file.path_remote)
-            self.logger.debug(f"Removing {dbfs_path}")
+            self.logger.info(f"Removing {dbfs_path}")
             try:
                 dbfs.rm(dbfs_path)
                 files_deleted.append(file)
