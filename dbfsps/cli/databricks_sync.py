@@ -1,56 +1,12 @@
 import os
 import logging
 import click
-from dbfsps.cli.utils import CONTEXT_SETTINGS
+from dbfsps.cli.utils import CONTEXT_SETTINGS, get_remote_path
 from dbfsps.setupnotebook import SetupNotebook
-from dbfsps.filestatus import load_status_data, update_status_data
+from dbfsps.syncer.state import State
+from dbfsps.syncer.plan import Plan
 from dbfsps.sdk.config import get_host_and_token
 from dbfsps.sdk.dbfs import Dbfs
-
-
-def verify_dbfs_path(dbfs_path: str) -> str:
-    if not dbfs_path.startswith("dbfs:"):
-        raise ValueError('remote path must start with "dbfs:"')
-    if "\\" in dbfs_path:
-        raise ValueError('remote path must be unix format, so only forward slashes "/"')
-    return dbfs_path.rstrip("/")
-
-
-def get_remote_path(remote_path: str, package_name: str) -> str:
-    """Gets the remote path. Will try to fetch it in the following order:
-        1. The remote_path argument
-        2. PACKAGE_REMOTE_DIR environment variable
-        3. Default path "dbfs:/FileStore/packages/"
-
-    :param remote_path:
-        DFBS path. Must be prefixed with "dbfs:"
-    :param package_name:
-        Appended to remote_path if remote_path is not None
-    :return:
-    """
-    logger = logging.getLogger(__name__)
-    if not remote_path:
-        try:
-            remote_path = os.environ["PACKAGE_REMOTE_DIR"]
-            logger.debug(f'Using remote_path from environment variable: "{remote_path}"')
-        except KeyError:
-            remote_path = f"dbfs:/FileStore/packages/{package_name}"
-            logger.debug(f'Using default remote path: "{remote_path}"')
-    else:
-        remote_path = remote_path
-        logger.debug(f'Using remote path specified in argument: "{remote_path}"')
-
-    remote_path = verify_dbfs_path(remote_path)
-
-    return remote_path
-
-
-def upload_file(dbfs: Dbfs, source: str, destination: str):
-    dbfs.cp(source, destination, overwrite=True)
-
-
-def remove_file(dbfs: Dbfs, dbfs_path: str):
-    dbfs.rm(dbfs_path)
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -86,6 +42,13 @@ def remove_file(dbfs: Dbfs, dbfs_path: str):
     default=False,
     help="Do not upload anything, only print what would have been uploaded",
 )
+@click.option(
+    "--root-path",
+    "-b",
+    default=os.path.abspath(os.curdir),
+    help="Absolute path to the root dir of the repository where you can find pyproject.toml",
+)
+@click.option("-v", "--verbose", count=True)
 def databricks_sync_api(
     package_name: str,
     package_location: str,
@@ -94,12 +57,20 @@ def databricks_sync_api(
     delete_status_file: bool,
     dry_run: bool,
     profile: str,
+    root_path: str,
+    verbose: int,
 ):
     """
     Synchronize remote package with local changes
     """
+    logging.basicConfig()
     logger = logging.getLogger("dbfsps")
-    logger.setLevel(logging.INFO)
+    if verbose == 0:
+        logger.setLevel(logging.WARNING)
+    elif verbose == 1:
+        logger.setLevel(logging.INFO)
+    else:
+        logger.setLevel(logging.DEBUG)
 
     if not os.path.isfile("pyproject.toml"):
         raise RuntimeError("Must be run from source root directory (where pyproject.toml is located)")
@@ -125,34 +96,11 @@ def databricks_sync_api(
     if not os.path.isfile(nb.notebook_path):
         nb.generate_notebook_file()
 
-    df_status = load_status_data(status_file)
-    df_status, files_to_upload, files_to_remove = update_status_data(df_status, package_location)
-
-    # Save updated status data
-    logging.debug(f'Writing updated status table to "{status_file}"')
-    df_status.to_csv(status_file, index=False)
-
-    logger.info(f"The following files will be uploaded: {files_to_upload}")
-    logger.info(f"The following files will be removed (remotely): {files_to_remove}")
-    logger.info(f"Using remote root path {remote_path}")
-
-    if len(files_to_upload) == 0 and len(files_to_remove) == 0:
-        logger.info("Nothing to do")
-        return
+    st = State(root_path, package_location, statefilename=status_file)
+    plan = Plan(st, remote_path=remote_path)
+    plan.print_plan()
 
     if not dry_run:
         host, token = get_host_and_token(profile=profile)
         dbfs = Dbfs(host, token)
-        for file_to_upload in files_to_upload:
-            remote_path_full = os.path.join(remote_path, file_to_upload)
-            upload_file(dbfs, file_to_upload, remote_path_full)
-        for file_to_remove in files_to_remove:
-            remote_path_full = os.path.join(remote_path, file_to_remove)
-            remove_file(dbfs, remote_path_full)
-    else:
-        for file_to_upload in files_to_upload:
-            remote_path_full = os.path.join(remote_path, file_to_upload)
-            print(f"Will upload {file_to_upload} to {remote_path_full}")
-        for file_to_remove in files_to_remove:
-            remote_path_full = os.path.join(remote_path, file_to_remove)
-            print(f"Will remove remote file {remote_path_full}")
+        plan.apply_plan(dbfs)
