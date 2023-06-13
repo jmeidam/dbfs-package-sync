@@ -8,12 +8,14 @@ from dbfsps.syncer.plan import Plan, get_requirements_relative_path
 
 def create_statefile(path: str):
     with open(path, "w") as f:
-        f.writelines([
-            "file1.py,123\n",
-            "file2.py,124\n",
-            "path/file3.py,125\n",
-            "path/file4.py,126\n",
-        ])
+        f.writelines(
+            [
+                "file1.py,123\n",
+                "file2.py,124\n",
+                "path/file3.py,125\n",
+                "path/file4.py,126\n",
+            ]
+        )
 
 
 def plan_apply(tmpdir, remote_path, mock_dbfs):
@@ -32,7 +34,7 @@ class PlanTester:
             tmpdir / "package" / "utils.py",
             tmpdir / "package" / "subdir" / "one.py",
             tmpdir / "package" / "subdir" / "two.py",
-            tmpdir / "package" / "__pycache__" / "something.pyc"
+            tmpdir / "package" / "__pycache__" / "something.pyc",
         ]
 
         self.mock_create_requirements_file = mocker.patch(
@@ -82,23 +84,16 @@ def test_plan_new(mocker, tmpdir):
         mocker.call(
             os.path.join(str(tmpdir), "package", "..", "requirements.txt"),
             os.path.join(remote_path, "requirements.txt"),
-            overwrite=True),
+            overwrite=True,
+        ),
+        mocker.call(str(tmpdir / "package" / "__init__.py"), os.path.join(remote_path, "__init__.py"), overwrite=True),
+        mocker.call(str(tmpdir / "package" / "utils.py"), os.path.join(remote_path, "utils.py"), overwrite=True),
         mocker.call(
-            str(tmpdir / "package" / "__init__.py"),
-            os.path.join(remote_path, "__init__.py"),
-            overwrite=True),
+            str(tmpdir / "package" / "subdir" / "one.py"), os.path.join(remote_path, "subdir/one.py"), overwrite=True
+        ),
         mocker.call(
-            str(tmpdir / "package" / "utils.py"),
-            os.path.join(remote_path, "utils.py"),
-            overwrite=True),
-        mocker.call(
-            str(tmpdir / "package" / "subdir" / "one.py"),
-            os.path.join(remote_path, "subdir/one.py"),
-            overwrite=True),
-        mocker.call(
-            str(tmpdir / "package" / "subdir" / "two.py"),
-            os.path.join(remote_path, "subdir/two.py"),
-            overwrite=True)
+            str(tmpdir / "package" / "subdir" / "two.py"), os.path.join(remote_path, "subdir/two.py"), overwrite=True
+        ),
     ]
 
     mock_dbfs.cp.assert_has_calls(expected_calls, any_order=True)
@@ -124,7 +119,7 @@ def test_plan_remove_files(mocker, tmpdir):
 
     expected_calls = [
         mocker.call(os.path.join(remote_path, "subdir/one.py")),
-        mocker.call(os.path.join(remote_path, "subdir/two.py"))
+        mocker.call(os.path.join(remote_path, "subdir/two.py")),
     ]
 
     mock_dbfs.rm.assert_has_calls(expected_calls, any_order=True)
@@ -154,7 +149,8 @@ def test_plan_update_lockfile(mocker, tmpdir):
         mocker.call(
             os.path.join(str(tmpdir), "package", "..", "requirements.txt"),
             os.path.join(remote_path, "requirements.txt"),
-            overwrite=True)
+            overwrite=True,
+        )
     ]
 
     mock_dbfs.cp.assert_has_calls(expected_calls, any_order=True)

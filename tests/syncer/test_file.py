@@ -24,7 +24,7 @@ def test_sort_list_of_files():
         "module/submodule/y.py",
         "module/submodule/z.py",
     ]
-    files = [File(path, 'package', 'rootdir', hashstr='x') for path in paths]
+    files = [File(path, "package", "rootdir", hashstr="x") for path in paths]
 
     sorted_files = sort_list_of_files(files)
 
@@ -37,7 +37,7 @@ def test_calculate_file_hash(mocker, tmpdir):
     sha_object.hexdigest.return_value = "hash_result"
     sha_func = mocker.patch("dbfsps.syncer.file.sha256", return_value=sha_object)
     filepath = os.path.join(str(tmpdir), "testfile.txt")
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         f.write("123\n")
 
     returned_hash = calculate_file_hash(filepath)
@@ -58,7 +58,7 @@ def test_file(mocker):
     mocker.patch("dbfsps.syncer.file.calculate_file_hash", return_value="file_hash")
     path_rel = os.path.join("rel", "path", "file.py")
     path_package = "packagename"
-    path_root = os.path.join(os.sep+"the", "root", "dir")
+    path_root = os.path.join(os.sep + "the", "root", "dir")
 
     f = File(path_rel, path_package, path_root)
 
@@ -73,7 +73,7 @@ def test_file_manual_hash(mocker):
     calc = mocker.patch("dbfsps.syncer.file.calculate_file_hash")
     path_rel = os.path.join("rel", "path", "file.py")
     path_package = "packagename"
-    path_root = os.path.join(os.sep+"the", "root", "dir")
+    path_root = os.path.join(os.sep + "the", "root", "dir")
     path_remote = "rel/remote/path"
 
     f = File(path_rel, path_package, path_root, relpath_remote=path_remote, hashstr="manual")

@@ -17,6 +17,7 @@ class Plan:
     :param remote_path:
         Path, including dbfs: prefix to the directory to which the package should be uploaded
     """
+
     def __init__(self, state: State, remote_path: str):
         self.logger = logging.getLogger(__name__)
         self.state = state
@@ -36,7 +37,7 @@ class Plan:
         for root, dirs, files in os.walk(self.state.packagepath):
             if os.path.basename(root) not in self._skip_dirs:
                 for file_name in files:
-                    rel_file_path = os.path.join(root.replace(self.state.packagepath, '').lstrip('/'), file_name)
+                    rel_file_path = os.path.join(root.replace(self.state.packagepath, "").lstrip("/"), file_name)
                     self.logger.debug(f"Scanning {rel_file_path}")
 
                     file_obj = File(rel_file_path, self.state.package, self.state.root)
@@ -53,8 +54,12 @@ class Plan:
 
         requirements_hash = calculate_file_hash(lock_abs_path)
         file_req = File(
-            req_rel_path, self.state.package, self.state.root,
-            hashstr=requirements_hash, relpath_remote="requirements.txt")
+            req_rel_path,
+            self.state.package,
+            self.state.root,
+            hashstr=requirements_hash,
+            relpath_remote="requirements.txt",
+        )
         self.local_files[file_req.path] = file_req
 
     def _plan(self):
@@ -103,7 +108,7 @@ class Plan:
         space_to_fill = int(len(summary) - 2 - len(title))
         if space_to_fill % 2 != 0:
             space_to_fill += 1
-        n_header_signs = int(space_to_fill/2)
+        n_header_signs = int(space_to_fill / 2)
         header_sep = "=" * n_header_signs
         header = f"{header_sep} {title} {header_sep}"
         footer = "=" * len(header)
@@ -115,7 +120,7 @@ class Plan:
         :param dbfs:
             An instance of the dbfs client to connect to Databricks
         """
-        files_to_upload = self.files_updated+self.files_new
+        files_to_upload = self.files_updated + self.files_new
         files_uploaded = []
         files_deleted = []
 

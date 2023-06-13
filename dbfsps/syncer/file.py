@@ -18,9 +18,10 @@ class File:
         Optional different remote relative path, needed for the requirements.txt file for example.
         By default, self.relpath_remote is simply self.path.
     """
+
     def __init__(
-            self, relpath: str, relpackagepath: str, root_dir: str,
-            hashstr: str = None, relpath_remote: str = None):
+        self, relpath: str, relpackagepath: str, root_dir: str, hashstr: str = None, relpath_remote: str = None
+    ):
         self.logger = logging.getLogger(__name__)
         self.path = relpath
         self.package = relpackagepath
@@ -65,6 +66,7 @@ def sort_list_of_files(files: List[File]) -> List[File]:
     :returns:
         Sorted list of File instances based on their `path` attribute.
     """
+
     def get_sort_key(obj):
         path = os.path.normpath(obj.path)
         return path.count(os.sep), path
@@ -75,6 +77,6 @@ def sort_list_of_files(files: List[File]) -> List[File]:
 def calculate_file_hash(path_abs: str) -> str:
     if not os.path.isfile(path_abs):
         raise FileNotFoundError(f"Unable to calculate hash. File {path_abs} does not exist")
-    with open(path_abs, 'rb') as f:
+    with open(path_abs, "rb") as f:
         hashstr = sha256(f.read()).hexdigest()
     return hashstr

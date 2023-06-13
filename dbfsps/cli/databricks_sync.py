@@ -48,7 +48,7 @@ from dbfsps.sdk.dbfs import Dbfs
     default=os.path.abspath(os.curdir),
     help="Absolute path to the root dir of the repository where you can find pyproject.toml",
 )
-@click.option('-v', '--verbose', count=True)
+@click.option("-v", "--verbose", count=True)
 def databricks_sync_api(
     package_name: str,
     package_location: str,
@@ -58,7 +58,7 @@ def databricks_sync_api(
     dry_run: bool,
     profile: str,
     root_path: str,
-    verbose: int
+    verbose: int,
 ):
     """
     Synchronize remote package with local changes

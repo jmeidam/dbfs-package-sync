@@ -14,7 +14,8 @@ class State:
     :param statefilename:
         Name of the statefile to use. Is .dbfsps_file_status by default and is located in the root
     """
-    def __init__(self, root_dir: str, relpackagepath: str, statefilename: str = '.dbfsps_file_status'):
+
+    def __init__(self, root_dir: str, relpackagepath: str, statefilename: str = ".dbfsps_file_status"):
         self.logger = logging.getLogger(__name__)
         self.files = {}
         self.root = root_dir
@@ -29,7 +30,7 @@ class State:
 
     def load_state(self):
         """Load files and their hashes from the statefile"""
-        with open(self.statefilepath, 'r') as f:
+        with open(self.statefilepath, "r") as f:
             self.logger.info(f"Loading statefile at {self.statefilepath}")
             for line in f.readlines():
                 vals = line.strip().split(",")
@@ -40,6 +41,6 @@ class State:
 
     def store_state(self):
         """Store the current files and their hashes in the statefile"""
-        with open(self.statefilepath, 'w') as f:
+        with open(self.statefilepath, "w") as f:
             for file in self.files.values():
                 f.write(f"{file.path},{file.hash}\n")

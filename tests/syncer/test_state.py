@@ -4,12 +4,14 @@ from dbfsps.syncer.state import State
 
 def create_statefile(path: str):
     with open(path, "w") as f:
-        f.writelines([
-            "file1.py,123\n",
-            "file2.py,124\n",
-            "path/file3.py,125\n",
-            "path/file4.py,126\n",
-        ])
+        f.writelines(
+            [
+                "file1.py,123\n",
+                "file2.py,124\n",
+                "path/file3.py,125\n",
+                "path/file4.py,126\n",
+            ]
+        )
 
 
 def test_state_init_with_file(tmpdir):
@@ -50,9 +52,3 @@ def test_state_store(tmpdir):
                 assert line.split(",")[1].strip() == "anewhash"
             if "path/file3.p" in line:
                 assert line.split(",")[1].strip() == "alsoanewhash"
-
-
-
-
-
-
